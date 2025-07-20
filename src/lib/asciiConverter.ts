@@ -1,4 +1,4 @@
-import type { ConversionSettings } from '@/components/TerminalGallery'
+import type { ConversionSettings } from '@/types'
 import { 
   optimizeImageDimensions, 
   calculateOptimalChunkSize, 
@@ -13,11 +13,57 @@ export const ASCII_SETS = {
   extended: ' .\'"^`,:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$'
 }
 
-// Size presets
+// Size presets (legacy - now calculated dynamically)
 export const SIZE_PRESETS = {
-  small: { width: 80, height: 60 },
-  medium: { width: 120, height: 90 },
-  large: { width: 200, height: 150 }
+  small: { width: 50, height: 25 },
+  medium: { width: 100, height: 50 },
+  large: { width: 150, height: 75 }
+}
+
+// Character aspect ratio compensation (characters are ~1.5x taller than wide)
+const CHARACTER_ASPECT_RATIO = 1.5
+
+// Calculate dynamic size presets based on image aspect ratio
+export function calculateDynamicPresets(imageWidth: number, imageHeight: number): typeof SIZE_PRESETS {
+  const imageAspectRatio = imageWidth / imageHeight
+  
+  // Base heights for each preset
+  const baseHeights = {
+    small: 25,
+    medium: 50,
+    large: 75
+  }
+  
+  const presets: typeof SIZE_PRESETS = {} as any
+  
+  Object.entries(baseHeights).forEach(([key, targetHeight]) => {
+    // Calculate width preserving aspect ratio with character compensation
+    const targetWidth = Math.round(targetHeight * imageAspectRatio * CHARACTER_ASPECT_RATIO)
+    
+    // Apply bounds (min 10, max 300) - increased width limit for wide images
+    const boundedWidth = Math.max(10, Math.min(300, targetWidth))
+    const boundedHeight = Math.max(10, Math.min(200, targetHeight))
+    
+    // If width was capped, adjust height proportionally to maintain aspect ratio
+    const actualAspectRatio = boundedWidth / boundedHeight
+    const targetAspectRatio = imageAspectRatio * CHARACTER_ASPECT_RATIO
+    
+    if (targetWidth > 300) {
+      // Width was capped, so recalculate height to maintain proper aspect ratio
+      const adjustedHeight = Math.round(boundedWidth / targetAspectRatio)
+      presets[key as keyof typeof SIZE_PRESETS] = {
+        width: boundedWidth,
+        height: Math.max(10, Math.min(200, adjustedHeight))
+      }
+    } else {
+      presets[key as keyof typeof SIZE_PRESETS] = {
+        width: boundedWidth,
+        height: boundedHeight
+      }
+    }
+  })
+  
+  return presets
 }
 
 interface ProgressCallback {
@@ -64,6 +110,14 @@ function getOutputDimensions(settings: ConversionSettings): { width: number; hei
       height: Math.max(10, Math.min(500, settings.customHeight))
     }
   }
+  
+  // Use dynamic presets if image dimensions are available
+  if (settings.imageWidth && settings.imageHeight) {
+    const dynamicPresets = calculateDynamicPresets(settings.imageWidth, settings.imageHeight)
+    return dynamicPresets[settings.size] || dynamicPresets.medium
+  }
+  
+  // Fallback to static presets
   return SIZE_PRESETS[settings.size] || SIZE_PRESETS.medium
 }
 

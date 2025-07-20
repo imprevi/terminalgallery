@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Eye, ZoomIn, ZoomOut, Monitor, Smartphone } from 'lucide-react'
-import type { ConversionSettings, ProcessingState } from './TerminalGallery'
+import type { ConversionSettings, ProcessingState } from '@/types'
 
 interface ASCIIPreviewProps {
   asciiArt: string
@@ -122,19 +122,29 @@ export default function ASCIIPreview({ asciiArt, processing, settings }: ASCIIPr
           }}
         >
           <div className="p-4">
-            <div
-              className="ascii-display"
-              style={{ 
-                fontSize: `${zoom}%`,
-                lineHeight: 1.2,
-                color: settings.colorMode === 'color' ? undefined : 'currentColor'
-              }}
-              dangerouslySetInnerHTML={{
-                __html: settings.colorMode === 'color' ? asciiArt : undefined
-              }}
-            >
-              {settings.colorMode !== 'color' ? asciiArt : undefined}
-            </div>
+            {settings.colorMode === 'color' ? (
+              <div
+                className="ascii-display"
+                style={{ 
+                  fontSize: `${zoom}%`,
+                  lineHeight: 1.2
+                }}
+                dangerouslySetInnerHTML={{
+                  __html: asciiArt
+                }}
+              />
+            ) : (
+              <div
+                className="ascii-display"
+                style={{ 
+                  fontSize: `${zoom}%`,
+                  lineHeight: 1.2,
+                  color: 'currentColor'
+                }}
+              >
+                {asciiArt}
+              </div>
+            )}
           </div>
         </div>
 

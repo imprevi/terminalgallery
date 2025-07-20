@@ -1,8 +1,8 @@
 'use client'
 
 import { Settings, Play, Loader } from 'lucide-react'
-import type { ConversionSettings, ProcessingState } from './TerminalGallery'
-import { ASCII_SETS, SIZE_PRESETS } from '@/lib/asciiConverter'
+import type { ConversionSettings, ProcessingState } from '@/types'
+import { ASCII_SETS, SIZE_PRESETS, calculateDynamicPresets } from '@/lib/asciiConverter'
 
 interface ConversionControlsProps {
   settings: ConversionSettings
@@ -19,6 +19,16 @@ export default function ConversionControls({
   canConvert,
   processing
 }: ConversionControlsProps) {
+  
+  // Get display presets (dynamic if image dimensions available, fallback to static)
+  const getDisplayPresets = () => {
+    if (settings.imageWidth && settings.imageHeight) {
+      return calculateDynamicPresets(settings.imageWidth, settings.imageHeight)
+    }
+    return SIZE_PRESETS
+  }
+  
+  const displayPresets = getDisplayPresets()
   return (
     <div className="card">
       <h2 className="text-xl font-bold text-primary-text mb-6 flex items-center gap-2">
@@ -98,7 +108,7 @@ export default function ConversionControls({
             Output Size
           </label>
           <div className="grid grid-cols-2 gap-3">
-            {Object.entries(SIZE_PRESETS).map(([key, preset]) => (
+            {Object.entries(displayPresets).map(([key, preset]) => (
               <button
                 key={key}
                 onClick={() => onSettingsChange({ size: key as any })}
@@ -207,6 +217,56 @@ export default function ConversionControls({
             >
               <div className="font-medium">Black & White</div>
               <div className="text-sm opacity-80">High contrast monochrome</div>
+            </button>
+          </div>
+        </div>
+
+        {/* Background Color Selection */}
+        <div>
+          <label className="block text-sm font-medium text-primary-text mb-3">
+            Export Background
+          </label>
+          <div className="grid grid-cols-3 gap-3">
+            <button
+              onClick={() => onSettingsChange({ backgroundColor: 'transparent' })}
+              className={`
+                p-3 rounded-lg border transition-all duration-200 text-left
+                ${settings.backgroundColor === 'transparent'
+                  ? 'border-accent-pink bg-accent-pink/10 text-primary-text'
+                  : 'border-accent-pink/20 bg-primary-bg-secondary hover:border-accent-pink/40 text-primary-text-secondary hover:text-primary-text'
+                }
+              `}
+            >
+              <div className="font-medium">Transparent</div>
+              <div className="text-sm opacity-80">No background</div>
+            </button>
+            
+            <button
+              onClick={() => onSettingsChange({ backgroundColor: 'black' })}
+              className={`
+                p-3 rounded-lg border transition-all duration-200 text-left
+                ${settings.backgroundColor === 'black'
+                  ? 'border-accent-pink bg-accent-pink/10 text-primary-text'
+                  : 'border-accent-pink/20 bg-primary-bg-secondary hover:border-accent-pink/40 text-primary-text-secondary hover:text-primary-text'
+                }
+              `}
+            >
+              <div className="font-medium">Black</div>
+              <div className="text-sm opacity-80">Dark background</div>
+            </button>
+            
+            <button
+              onClick={() => onSettingsChange({ backgroundColor: 'white' })}
+              className={`
+                p-3 rounded-lg border transition-all duration-200 text-left
+                ${settings.backgroundColor === 'white'
+                  ? 'border-accent-pink bg-accent-pink/10 text-primary-text'
+                  : 'border-accent-pink/20 bg-primary-bg-secondary hover:border-accent-pink/40 text-primary-text-secondary hover:text-primary-text'
+                }
+              `}
+            >
+              <div className="font-medium">White</div>
+              <div className="text-sm opacity-80">Light background</div>
             </button>
           </div>
         </div>

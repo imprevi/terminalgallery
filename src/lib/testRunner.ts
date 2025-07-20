@@ -1,7 +1,7 @@
 // Test runner for TerminalGallery core functionality
 import { ASCII_SETS, SIZE_PRESETS, validateSettings, estimateOutputSize } from './asciiConverter'
 import { optimizeImageDimensions, canHandleProcessing, estimateProcessingTime } from './performanceOptimizer'
-import type { ConversionSettings } from '@/components/TerminalGallery'
+import type { ConversionSettings } from '@/types'
 
 // Test results interface
 interface TestResult {
@@ -81,7 +81,8 @@ function testSettingsValidation(): TestResult {
       size: 'medium',
       customWidth: 120,
       customHeight: 90,
-      colorMode: 'color'
+      colorMode: 'color',
+      backgroundColor: 'transparent'
     }
 
     let errors = validateSettings(validSettings)
@@ -160,7 +161,8 @@ function testOutputEstimation(): TestResult {
       size: 'medium',
       customWidth: 120,
       customHeight: 90,
-      colorMode: 'color'
+      colorMode: 'color',
+      backgroundColor: 'transparent'
     }
 
     const estimate = estimateOutputSize(settings)

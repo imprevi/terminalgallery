@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Download, Copy, FileText, Image as ImageIcon, Check } from 'lucide-react'
-import type { ConversionSettings } from './TerminalGallery'
+import type { ConversionSettings } from '@/types'
 
 interface ExportControlsProps {
   asciiArt: string
@@ -89,7 +89,9 @@ export default function ExportControls({ asciiArt, originalFileName, settings }:
       }
     </style>
   </defs>
-  <rect width="100%" height="100%" fill="#1a1a1a"/>
+  ${settings.backgroundColor !== 'transparent' ? 
+    `<rect width="100%" height="100%" fill="${settings.backgroundColor === 'black' ? '#1a1a1a' : '#ffffff'}"/>` : 
+    ''}
 `
 
     // Add text elements for each line
@@ -108,7 +110,8 @@ export default function ExportControls({ asciiArt, originalFileName, settings }:
             if (node.nodeType === Node.TEXT_NODE) {
               const text = node.textContent || ''
               if (text.trim()) {
-                svgContent += `  <text x="${x}" y="${y}" class="ascii-text" fill="#f5f5f5">${text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</text>\n`
+                const textColor = settings.backgroundColor === 'white' ? '#000000' : '#f5f5f5'
+                svgContent += `  <text x="${x}" y="${y}" class="ascii-text" fill="${textColor}">${text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</text>\n`
                 x += text.length * charWidth
               }
             } else if (node.nodeType === Node.ELEMENT_NODE) {
@@ -129,7 +132,8 @@ export default function ExportControls({ asciiArt, originalFileName, settings }:
         // Plain text
         const plainLine = line.replace(/<[^>]*>/g, '')
         if (plainLine.trim()) {
-          svgContent += `  <text x="${padding}" y="${y}" class="ascii-text" fill="#f5f5f5">${plainLine.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</text>\n`
+          const textColor = settings.backgroundColor === 'white' ? '#000000' : '#f5f5f5'
+          svgContent += `  <text x="${padding}" y="${y}" class="ascii-text" fill="${textColor}">${plainLine.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</text>\n`
         }
       }
     })
@@ -212,8 +216,11 @@ export default function ExportControls({ asciiArt, originalFileName, settings }:
     // Enable maximum quality rendering
     freshCtx.imageSmoothingEnabled = false // Keep crisp edges
     
-    // No background - transparent PNG
-    // (Skip background fill to keep transparency)
+    // Set background based on settings
+    if (settings.backgroundColor !== 'transparent') {
+      freshCtx.fillStyle = settings.backgroundColor === 'black' ? '#000000' : '#ffffff'
+      freshCtx.fillRect(0, 0, baseWidth, baseHeight)
+    }
     
     // Set ultra-high quality font with perfect spacing
     freshCtx.font = `bold ${fontSize}px 'JetBrains Mono', 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace`
@@ -260,8 +267,12 @@ export default function ExportControls({ asciiArt, originalFileName, settings }:
           })
         }
       } else {
-        // Plain text
-        freshCtx.fillStyle = '#f5f5f5'
+        // Plain text with background-appropriate color
+        if (settings.backgroundColor === 'white') {
+          freshCtx.fillStyle = '#000000'
+        } else {
+          freshCtx.fillStyle = '#f5f5f5'
+        }
         const plainLine = line.replace(/<[^>]*>/g, '')
         freshCtx.fillText(plainLine, padding, y)
       }

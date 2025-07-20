@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
 import './globals.css'
 
@@ -19,11 +19,15 @@ export const metadata: Metadata = {
   description: 'Convert images to beautiful ASCII art with terminal aesthetics. Upload any image and create stunning text-based artwork.',
   keywords: ['ascii art', 'image converter', 'terminal', 'text art', 'image to text'],
   authors: [{ name: 'TerminalGallery' }],
-  viewport: 'width=device-width, initial-scale=1',
-  themeColor: '#1a1a1a',
   icons: {
     icon: '/favicon.ico',
   },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#1a1a1a',
 }
 
 export default function RootLayout({

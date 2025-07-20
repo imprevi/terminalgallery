@@ -1,5 +1,7 @@
 'use client'
 
+import Link from 'next/link'
+
 export default function Header() {
   return (
     <header className="border-b border-accent-pink/20 bg-primary-bg-secondary/50 backdrop-blur-sm">
@@ -20,8 +22,18 @@ export default function Header() {
 
           {/* Navigation */}
           <nav className="hidden lg:flex items-center space-x-8">
-            <span className="text-primary-text-secondary hover:text-accent-pink transition-colors duration-200 cursor-pointer">How it Works</span>
-            <span className="text-primary-text-secondary hover:text-accent-pink transition-colors duration-200 cursor-pointer">About</span>
+            <Link 
+              href="/how-it-works" 
+              className="text-primary-text-secondary hover:text-accent-pink transition-colors duration-200 cursor-pointer font-medium"
+            >
+              How it Works
+            </Link>
+            <Link 
+              href="/about" 
+              className="text-primary-text-secondary hover:text-accent-pink transition-colors duration-200 cursor-pointer font-medium"
+            >
+              About
+            </Link>
           </nav>
         </div>
       </div>

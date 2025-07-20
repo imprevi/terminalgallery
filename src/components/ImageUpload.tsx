@@ -30,7 +30,7 @@ export default function ImageUpload({ onImageUpload, uploadedImage, imageUrl }: 
     return null
   }
 
-  const processFile = (file: File) => {
+  const processFile = useCallback((file: File) => {
     const validationError = validateFile(file)
     if (validationError) {
       setError(validationError)
@@ -44,7 +44,7 @@ export default function ImageUpload({ onImageUpload, uploadedImage, imageUrl }: 
 
     setError('')
     onImageUpload(file)
-  }
+  }, [onImageUpload])
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -74,7 +74,7 @@ export default function ImageUpload({ onImageUpload, uploadedImage, imageUrl }: 
       const file = e.dataTransfer.files[0]
       processFile(file)
     }
-  }, [])
+  }, [processFile])
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
