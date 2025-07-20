@@ -1,17 +1,20 @@
 import type { ConversionSettings } from '@/types'
 import { 
   optimizeImageDimensions, 
-  calculateOptimalChunkSize, 
   canHandleProcessing,
   PerformanceMonitor,
   throttle
 } from './performanceOptimizer'
+import {
+  ASCII_SETS,
+  getLuminance,
+  luminanceToASCII,
+  processImageChunk,
+  calculateOptimalChunkSize
+} from './workerShared'
 
-// ASCII Character Sets
-export const ASCII_SETS = {
-  basic: '.,:;!*#@',
-  extended: ' .\'"^`,:;Il!i><~+_-?][}{1)(|\\/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$'
-}
+// Re-export for backwards compatibility
+export { ASCII_SETS } from './workerShared'
 
 // Size presets (legacy - now calculated dynamically)
 export const SIZE_PRESETS = {
@@ -76,18 +79,6 @@ interface ImageData {
   height: number
 }
 
-// Luminance calculation using standard weights
-function getLuminance(r: number, g: number, b: number): number {
-  return 0.299 * r + 0.587 * g + 0.114 * b
-}
-
-// Map luminance to ASCII character
-function luminanceToASCII(luminance: number, characterSet: string): string {
-  const normalizedLuminance = Math.min(255, Math.max(0, luminance))
-  const charIndex = Math.floor((normalizedLuminance / 255) * (characterSet.length - 1))
-  return characterSet[charIndex]
-}
-
 // Get character set based on settings
 function getCharacterSet(settings: ConversionSettings): string {
   switch (settings.characterSet) {
@@ -134,6 +125,9 @@ async function loadImageData(file: File): Promise<ImageData> {
     }
 
     img.onload = () => {
+      // Clean up object URL
+      URL.revokeObjectURL(img.src)
+      
       // Optimize image dimensions for performance
       const optimized = optimizeImageDimensions(img.width, img.height)
       
@@ -152,6 +146,8 @@ async function loadImageData(file: File): Promise<ImageData> {
     }
 
     img.onerror = () => {
+      // Clean up object URL on error too
+      URL.revokeObjectURL(img.src)
       reject(new Error('Failed to load image'))
     }
 
@@ -159,72 +155,7 @@ async function loadImageData(file: File): Promise<ImageData> {
   })
 }
 
-// Process image in chunks for better performance
-function processImageChunk(
-  imageData: ImageData,
-  startRow: number,
-  endRow: number,
-  outputWidth: number,
-  outputHeight: number,
-  characterSet: string,
-  colorMode: string
-): string[] {
-  const { data, width, height } = imageData
-  const result: string[] = []
-  
-  const scaleX = width / outputWidth
-  const scaleY = height / outputHeight
 
-  for (let y = startRow; y < endRow; y++) {
-    let row = ''
-    
-    for (let x = 0; x < outputWidth; x++) {
-      // Sample from the original image
-      const sourceX = Math.floor(x * scaleX)
-      const sourceY = Math.floor(y * scaleY)
-      const pixelIndex = (sourceY * width + sourceX) * 4
-
-      const r = data[pixelIndex]
-      const g = data[pixelIndex + 1]
-      const b = data[pixelIndex + 2]
-      const a = data[pixelIndex + 3] || 255
-
-      let luminance: number
-
-      switch (colorMode) {
-        case 'grayscale':
-          luminance = getLuminance(r, g, b)
-          break
-        case 'blackwhite':
-          luminance = getLuminance(r, g, b) > 128 ? 255 : 0
-          break
-        case 'color':
-        default:
-          luminance = getLuminance(r, g, b)
-          break
-      }
-
-      // Apply alpha transparency
-      if (a < 255) {
-        luminance = luminance * (a / 255)
-      }
-
-      const char = luminanceToASCII(luminance, characterSet)
-      
-      if (colorMode === 'color' && a > 0) {
-        // For color mode, wrap character in span with color
-        const color = `rgb(${r},${g},${b})`
-        row += `<span style="color:${color}">${char}</span>`
-      } else {
-        row += char
-      }
-    }
-    
-    result.push(row)
-  }
-
-  return result
-}
 
 // Main conversion function using Web Worker with performance optimization
 export async function convertImageToASCII(
@@ -319,6 +250,10 @@ export async function convertImageToASCII(
               
               if (colorMode === 'color' && a > 0) {
                 const color = \`rgb(\${r},\${g},\${b})\`;
+                row += \`<span style="color:\${color}">\${char}</span>\`;
+              } else if (colorMode === 'grayscale' && a > 0) {
+                const gray = Math.round(luminance);
+                const color = \`rgb(\${gray},\${gray},\${gray})\`;
                 row += \`<span style="color:\${color}">\${char}</span>\`;
               } else {
                 row += char;
@@ -423,7 +358,14 @@ export async function convertImageToASCII(
 export function estimateOutputSize(settings: ConversionSettings): { chars: number; bytes: number } {
   const { width, height } = getOutputDimensions(settings)
   const chars = width * height
-  const bytesPerChar = settings.colorMode === 'color' ? 50 : 1 // Rough estimate for HTML spans
+  
+  let bytesPerChar: number
+  if (settings.colorMode === 'color' || settings.colorMode === 'grayscale') {
+    bytesPerChar = 50 // Rough estimate for HTML spans with color
+  } else {
+    bytesPerChar = 1 // Plain text for black & white
+  }
+  
   return {
     chars,
     bytes: chars * bytesPerChar

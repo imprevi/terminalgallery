@@ -1,5 +1,6 @@
-import { convertImageToASCII, ASCII_SETS, SIZE_PRESETS, validateSettings, estimateOutputSize } from './asciiConverter'
+import { convertImageToASCII, SIZE_PRESETS, validateSettings, estimateOutputSize } from './asciiConverter'
 import { optimizeImageDimensions, canHandleProcessing, estimateProcessingTime } from './performanceOptimizer'
+import { ASCII_SETS } from './workerShared'
 import type { ConversionSettings } from '@/types'
 
 // Test results interface
@@ -178,8 +179,20 @@ export class ASCIIConverterTester {
       const time = Date.now() - start
       
       const hasGrayHTML = result.includes('<span') && result.includes('color:rgb(')
-      this.addResult('Grayscale Mode', hasGrayHTML && result.length > 100, undefined, time,
-        `HTML output with grayscale: ${result.length} chars`)
+      // Check that grayscale colors are actually grayscale (same R, G, B values)
+      const grayColorRegex = /color:rgb\((\d+),(\d+),(\d+)\)/g
+      let hasValidGrayColors = true
+      let match
+      while ((match = grayColorRegex.exec(result)) !== null) {
+        const [, r, g, b] = match
+        if (r !== g || g !== b) {
+          hasValidGrayColors = false
+          break
+        }
+      }
+      
+      this.addResult('Grayscale Mode', hasGrayHTML && hasValidGrayColors && result.length > 100, undefined, time,
+        `HTML output with proper grayscale spans: ${result.length} chars`)
     } catch (error) {
       this.addResult('Grayscale Mode', false, error instanceof Error ? error.message : 'Unknown error')
     }
@@ -320,13 +333,34 @@ export class ASCIIConverterTester {
       this.addResult('Performance Analysis', false, error instanceof Error ? error.message : 'Unknown error')
     }
 
-    // Test output size estimation
+    // Test output size estimation for different modes
     try {
-      const estimate = estimateOutputSize(settings)
-      this.addResult('Output Size Estimation', estimate.chars > 0 && estimate.bytes > 0, undefined, 0,
-        `Estimated: ${estimate.chars} chars, ${estimate.bytes} bytes`)
+      const blackWhiteEstimate = estimateOutputSize(settings)
+      const grayscaleEstimate = estimateOutputSize({ ...settings, colorMode: 'grayscale' })
+      const colorEstimate = estimateOutputSize({ ...settings, colorMode: 'color' })
+      
+      const hasCorrectEstimates = blackWhiteEstimate.bytes < grayscaleEstimate.bytes && 
+                                 grayscaleEstimate.bytes === colorEstimate.bytes
+      
+      this.addResult('Output Size Estimation', hasCorrectEstimates && blackWhiteEstimate.chars > 0, undefined, 0,
+        `B&W: ${blackWhiteEstimate.bytes}B, Gray: ${grayscaleEstimate.bytes}B, Color: ${colorEstimate.bytes}B`)
     } catch (error) {
       this.addResult('Output Size Estimation', false, error instanceof Error ? error.message : 'Unknown error')
+    }
+
+    // Test shared utilities
+    try {
+      const { calculateOptimalChunkSize } = await import('./workerShared')
+      const chunk50 = calculateOptimalChunkSize(50)
+      const chunk200 = calculateOptimalChunkSize(200)
+      const chunk500 = calculateOptimalChunkSize(500)
+      
+      const hasValidChunkSizes = chunk50 < chunk200 && chunk200 < chunk500
+      
+      this.addResult('Shared Utilities', hasValidChunkSizes, undefined, 0,
+        `Chunk sizes: 50h→${chunk50}, 200h→${chunk200}, 500h→${chunk500}`)
+    } catch (error) {
+      this.addResult('Shared Utilities', false, error instanceof Error ? error.message : 'Unknown error')
     }
   }
 

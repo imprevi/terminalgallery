@@ -4,7 +4,7 @@ import { useCallback, useState, useRef } from 'react'
 import { Upload, Image as ImageIcon, X } from 'lucide-react'
 
 interface ImageUploadProps {
-  onImageUpload: (file: File) => void
+  onImageUpload: (file: File | null) => void
   uploadedImage: File | null
   imageUrl: string
 }
@@ -89,7 +89,7 @@ export default function ImageUpload({ onImageUpload, uploadedImage, imageUrl }: 
     if (uploadedImage) {
       URL.revokeObjectURL(imageUrl)
     }
-    onImageUpload(null as any) // This will clear the image
+    onImageUpload(null) // This will clear the image
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }

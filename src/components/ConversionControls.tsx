@@ -2,7 +2,8 @@
 
 import { Settings, Play, Loader } from 'lucide-react'
 import type { ConversionSettings, ProcessingState } from '@/types'
-import { ASCII_SETS, SIZE_PRESETS, calculateDynamicPresets } from '@/lib/asciiConverter'
+import { SIZE_PRESETS, calculateDynamicPresets } from '@/lib/asciiConverter'
+import { ASCII_SETS } from '@/lib/workerShared'
 
 interface ConversionControlsProps {
   settings: ConversionSettings

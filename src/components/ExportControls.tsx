@@ -193,18 +193,14 @@ export default function ExportControls({ asciiArt, originalFileName, settings }:
     const finalHeight = baseHeight * scaleFactor
     const maxCanvasSize = 16384 // Conservative limit for better compatibility
     
-    let activeScale = scaleFactor
+    // Calculate scale to ensure both dimensions stay within limits
+    const widthScale = Math.min(maxCanvasSize / baseWidth, scaleFactor)
+    const heightScale = Math.min(maxCanvasSize / baseHeight, scaleFactor)
+    const activeScale = Math.min(widthScale, heightScale, 2) // Cap at 2x for safety
     
-    if (finalWidth > maxCanvasSize || finalHeight > maxCanvasSize) {
-      // Fallback to lower quality if too large
-      activeScale = Math.min(maxCanvasSize / baseWidth, maxCanvasSize / baseHeight, 2)
-      canvas.width = baseWidth * activeScale
-      canvas.height = baseHeight * activeScale
-    } else {
-      // Set canvas to high resolution (final size)
-      canvas.width = finalWidth
-      canvas.height = finalHeight
-    }
+    // Set canvas dimensions with proper clamping
+    canvas.width = Math.min(baseWidth * activeScale, maxCanvasSize)
+    canvas.height = Math.min(baseHeight * activeScale, maxCanvasSize)
     
     // Get fresh context after resizing
     const freshCtx = canvas.getContext('2d')

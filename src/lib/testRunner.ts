@@ -1,6 +1,7 @@
 // Test runner for TerminalGallery core functionality
-import { ASCII_SETS, SIZE_PRESETS, validateSettings, estimateOutputSize } from './asciiConverter'
+import { SIZE_PRESETS, validateSettings, estimateOutputSize } from './asciiConverter'
 import { optimizeImageDimensions, canHandleProcessing, estimateProcessingTime } from './performanceOptimizer'
+import { ASCII_SETS } from './workerShared'
 import type { ConversionSettings } from '@/types'
 
 // Test results interface

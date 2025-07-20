@@ -29,7 +29,20 @@ export default function TerminalGallery() {
     backgroundColor: 'transparent'
   })
 
-  const handleImageUpload = (file: File) => {
+  const handleImageUpload = (file: File | null) => {
+    if (!file) {
+      // Clear image
+      setSelectedFile(null)
+      setImageUrl('')
+      setAsciiArt('')
+      setSettings(prev => ({
+        ...prev,
+        imageWidth: undefined,
+        imageHeight: undefined
+      }))
+      return
+    }
+    
     setSelectedFile(file)
     const url = URL.createObjectURL(file)
     setImageUrl(url)
@@ -60,33 +73,18 @@ export default function TerminalGallery() {
     })
 
     try {
-      // Update progress during conversion
-      setProcessing(prev => ({
-        ...prev,
-        stage: 'Loading image...',
-        progress: 10
-      }))
-
-      // Small delay to show progress
-      await new Promise(resolve => setTimeout(resolve, 100))
-
-      setProcessing(prev => ({
-        ...prev,
-        stage: 'Converting to ASCII...',
-        progress: 30
-      }))
-
-      // Perform the actual conversion
-      const result = await convertImageToASCII(selectedFile, settings)
-
-      setProcessing(prev => ({
-        ...prev,
-        stage: 'Finalizing...',
-        progress: 90
-      }))
-
-      // Small delay before completion
-      await new Promise(resolve => setTimeout(resolve, 200))
+      // Perform the actual conversion with real progress updates
+      const result = await convertImageToASCII(
+        selectedFile, 
+        settings,
+        (progress, stage) => {
+          setProcessing({
+            isProcessing: true,
+            stage,
+            progress
+          })
+        }
+      )
 
       // Set the result
       setAsciiArt(result)

@@ -38,14 +38,7 @@ export function optimizeImageDimensions(
   }
 }
 
-// Calculate optimal chunk size based on output dimensions
-export function calculateOptimalChunkSize(outputHeight: number): number {
-  if (outputHeight <= 50) return 5
-  if (outputHeight <= 100) return 10
-  if (outputHeight <= 200) return 15
-  if (outputHeight <= 400) return 20
-  return 25
-}
+// Note: calculateOptimalChunkSize moved to workerShared.ts for consistency
 
 // Estimate processing time based on image complexity
 export function estimateProcessingTime(
