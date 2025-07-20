@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom CSS Variables for Dark Cheesecake Theme */
+:root {
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2d2d2d;
+  --text-primary: #f5f5f5;
+  --text-secondary: #b8b8b8;
+  --accent-pink: #ff6b9d;
+  --accent-peach: #ffa07a;
+  --accent-cream: #fff8dc;
+  --accent-purple: #c19a6b;
+}
+
+/* Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-feature-settings: 'rlig' 1, 'calt' 1;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent-pink);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-peach);
+}
+
+/* Selection Colors */
+::selection {
+  background-color: var(--accent-pink);
+  color: var(--bg-primary);
+}
+
+/* Focus Styles */
+.focus-visible:focus-visible {
+  outline: 2px solid var(--accent-pink);
+  outline-offset: 2px;
+}
+
+/* Custom Components */
+@layer components {
+  .btn-primary {
+    @apply bg-accent-pink hover:bg-accent-pink/80 text-primary-bg font-medium px-4 py-2 rounded-lg transition-all duration-200 focus-visible:outline-accent-pink;
+  }
+  
+  .btn-secondary {
+    @apply bg-primary-bg-secondary hover:bg-primary-bg-secondary/80 text-primary-text border border-accent-pink/20 font-medium px-4 py-2 rounded-lg transition-all duration-200;
+  }
+  
+  .input-field {
+    @apply bg-primary-bg-secondary border border-accent-pink/20 text-primary-text placeholder-primary-text-secondary px-3 py-2 rounded-lg focus:border-accent-pink focus:ring-1 focus:ring-accent-pink transition-all duration-200;
+  }
+  
+  .card {
+    @apply bg-primary-bg-secondary border border-accent-pink/10 rounded-xl p-6 shadow-lg;
+  }
+  
+  .ascii-display {
+    @apply font-ascii text-sm leading-none tracking-normal whitespace-pre overflow-auto;
+  }
+  
+  .terminal-border {
+    @apply border border-accent-pink/30 rounded-lg;
+  }
+}
+
+/* Animations */
+@keyframes terminal-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--accent-pink);
+  }
+  50% {
+    box-shadow: 0 0 20px var(--accent-pink), 0 0 30px var(--accent-pink);
+  }
+}
+
+.terminal-glow {
+  animation: terminal-glow 2s ease-in-out infinite;
+}
+
+/* Loading Animation */
+@keyframes dots {
+  0%, 20% {
+    color: transparent;
+    text-shadow: .25em 0 0 transparent, .5em 0 0 transparent;
+  }
+  40% {
+    color: var(--text-primary);
+    text-shadow: .25em 0 0 transparent, .5em 0 0 transparent;
+  }
+  60% {
+    text-shadow: .25em 0 0 var(--text-primary), .5em 0 0 transparent;
+  }
+  80%, 100% {
+    text-shadow: .25em 0 0 var(--text-primary), .5em 0 0 var(--text-primary);
+  }
+}
+
+.loading-dots::after {
+  content: "...";
+  animation: dots 1.5s steps(5, end) infinite;
+}
+
+/* Drag and Drop Styles */
+.drag-active {
+  @apply border-accent-pink bg-accent-pink/5;
+}
+
+.drag-reject {
+  @apply border-status-error bg-status-error/5;
+} 
